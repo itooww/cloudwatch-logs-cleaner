@@ -12,7 +12,7 @@ logger.setLevel(INFO)
 logs_client = boto3.client('logs')
 lambda_client = boto3.client('lambda')
 
-def get_log_groups():
+def get_log_group_names():
     """
     CloudWatch Logs の全てのロググループ情報を取得し、ロググループ名のリストを返す
 
@@ -90,8 +90,8 @@ def lambda_handler(event, context):
     logger.info(json.dumps(event, ensure_ascii=False, indent=2))
 
     # get log groups list
-    log_groups = get_log_groups()
-    logger.debug(json.dumps(log_groups, ensure_ascii=False, indent=2))
+    log_group_names = get_log_group_names()
+    logger.debug(json.dumps(log_group_names, ensure_ascii=False, indent=2))
 
     lambda_function_names = get_lambda_function_names()
     logger.debug(json.dumps(lambda_function_names, ensure_ascii=False, indent=2))
