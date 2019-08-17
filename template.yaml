@@ -1,9 +1,8 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  sam-app
-
-  Sample SAM Template for sam-app
+  daily clean cloudwatch logs log group serverless app
+  https://github.com/itooww/cloudwatch-logs-cleaner
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
@@ -17,16 +16,55 @@ Resources:
       CodeUri: cleaner/
       Handler: app.lambda_handler
       Runtime: python3.7
+      Role: !GetAtt CleanerFunctionIamRole.Arn
       Events:
         DailyCleanEvent:
           Type: Schedule
           Properties:
             Schedule: rate(1 day)
 
+  CleanerFunctionIamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        -
+          PolicyName: "minimum_lambda_basic_execution_policy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: "*"
+        -
+          PolicyName: "cleaner_need_policy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action:
+                  - "logs:DescribeLogGroups"
+                  - "logs:DeleteLogGroup"
+                  - "lambda:ListFunctions"
+                  - "apigateway:GET"
+                Resource: "*"
+
 Outputs:
-  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   CleanerFunction:
     Description: "Cleaner Lambda Function ARN"
     Value: !GetAtt CleanerFunction.Arn
+
+  CleanerFunctionIamRole:
+    Description: "Atattched IAM Role ARN"
+    Value: !GetAtt CleanerFunctionIamRole.Arn
