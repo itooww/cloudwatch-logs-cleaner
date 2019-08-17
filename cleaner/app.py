@@ -10,6 +10,7 @@ logger = getLogger(__name__)
 logger.setLevel(INFO)
 
 logs_client = boto3.client('logs')
+lambda_client = boto3.client('lambda')
 
 def get_log_groups():
     """
@@ -46,7 +47,41 @@ def get_log_groups():
 
     return log_groups
 
+def get_lambda_function_names():
+    """
+    Lambda 関数の全ての情報を取得し、Lambda 関数名のリストを返す
 
+    Returns
+    -------
+    lambda_function_names: list
+        Lambda 関数名のリスト
+    """
+
+    lambda_function_names = list()
+
+    try:
+        responses = list()
+        response = lambda_client.list_functions()
+        responses.append(response)
+        logger.debug(response)
+        next_marker = response['nextMarker'] if 'nextMarker' in response else ''
+
+        while next_marker:
+            response = lambda_client.list_functions(Marker=next_marker) if next_marker else lambda_client.list_functions()
+            logger.debug(response)
+
+            responses.append(response)
+            next_marker = response['nextMarker'] if 'nextMarker' in response else ''
+
+        for response in responses:
+            for lambda_function in response['Functions']:
+                logger.debug(lambda_function)
+                lambda_function_names.append(lambda_function['FunctionName'])
+
+    except Exception as e:
+        logger.error(e)
+
+    return lambda_function_names
 
 def lambda_handler(event, context):
 
@@ -56,6 +91,9 @@ def lambda_handler(event, context):
     # get log groups list
     log_groups = get_log_groups()
     logger.debug(json.dumps(log_groups, ensure_ascii=False, indent=2))
+
+    lambda_function_names = get_lambda_function_names()
+    logger.debug(json.dumps(lambda_function_names, ensure_ascii=False, indent=2))
 
     return {
         "statusCode": 200,
