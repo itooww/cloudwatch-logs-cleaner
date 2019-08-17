@@ -50,23 +50,10 @@ def get_lambda_function_names():
     lambda_function_names = list()
 
     try:
-        responses = list()
-        response = lambda_client.list_functions()
-        responses.append(response)
-        logger.debug(response)
-        next_marker = response['nextMarker'] if 'nextMarker' in response else ''
-
-        while next_marker:
-            response = lambda_client.list_functions(Marker=next_marker) if next_marker else lambda_client.list_functions()
-            logger.debug(response)
-
-            responses.append(response)
-            next_marker = response['nextMarker'] if 'nextMarker' in response else ''
-
-        for response in responses:
-            for lambda_function in response['Functions']:
-                logger.debug(lambda_function)
-                lambda_function_names.append(lambda_function['FunctionName'])
+        paginator = lambda_client.get_paginator('list_functions')
+        for page in paginator.paginate():
+            for function in page['Functions']:
+                lambda_function_names.append(function['FunctionName'])
 
     except Exception as e:
         logger.error(e)
