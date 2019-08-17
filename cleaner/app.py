@@ -1,37 +1,61 @@
 import json
+import botocore
+import boto3
+from logging import getLogger, INFO, DEBUG
 
-# import requests
+# boto3.set_stream_logger()
+# botocore.session.Session().set_debug_logger()
+
+logger = getLogger(__name__)
+logger.setLevel(INFO)
+
+logs_client = boto3.client('logs')
+
+def get_log_groups():
+    """
+    CloudWatch Logs の全てのロググループ情報を取得し、ロググループ名のリストを返す
+
+    Returns
+    -------
+    log_groups: list
+        ロググループ名のリスト
+    """
+
+    log_groups = list()
+
+    try:
+        responses = list()
+        response = logs_client.describe_log_groups()
+        logger.debug(response)
+        next_token = response['nextToken'] if 'nextToken' in response else ''
+
+        while next_token:
+            response = logs_client.describe_log_groups(nextToken=next_token) if next_token else logs_client.describe_log_groups()
+            logger.debug(response)
+
+            responses.append(response)
+            next_token = response['nextToken'] if 'nextToken' in response else ''
+
+        for response in responses:
+            for log_group in response['logGroups']:
+                logger.debug(log_group)
+                log_groups.append(log_group['logGroupName'])
+
+    except Exception as e:
+        logger.error(e)
+
+    return log_groups
+
 
 
 def lambda_handler(event, context):
-    """Sample pure Lambda function
 
-    Parameters
-    ----------
-    event: dict, required
-        API Gateway Lambda Proxy Input Format
+    # recieved event
+    logger.info(json.dumps(event, ensure_ascii=False, indent=2))
 
-        Event doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
-
-    context: object, required
-        Lambda Context runtime methods and attributes
-
-        Context doc: https://docs.aws.amazon.com/lambda/latest/dg/python-context-object.html
-
-    Returns
-    ------
-    API Gateway Lambda Proxy Output Format: dict
-
-        Return doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html
-    """
-
-    # try:
-    #     ip = requests.get("http://checkip.amazonaws.com/")
-    # except requests.RequestException as e:
-    #     # Send some context about this error to Lambda Logs
-    #     print(e)
-
-    #     raise e
+    # get log groups list
+    log_groups = get_log_groups()
+    logger.debug(json.dumps(log_groups, ensure_ascii=False, indent=2))
 
     return {
         "statusCode": 200,
