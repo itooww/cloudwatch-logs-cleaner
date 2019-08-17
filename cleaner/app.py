@@ -108,8 +108,8 @@ def delete_not_exist_lambda_log_groups(lambda_log_group_names, lambda_function_n
     logger.info('delete lambda log group list')
     logger.info(json.dumps(not_exist_lambda_log_groups, ensure_ascii=False, indent=2))
 
-    # for not_exist_lambda_log_group in not_exist_lambda_log_groups:
-    #     logs_client.delete_log_group(logGroupName=not_exist_lambda_log_group)
+    for not_exist_lambda_log_group in not_exist_lambda_log_groups:
+        logs_client.delete_log_group(logGroupName=not_exist_lambda_log_group)
 
 def get_apigateway_restapi_ids():
     """
@@ -182,8 +182,8 @@ def delete_not_exist_apigateway_execution_log_groups(apigateway_execution_log_gr
     logger.info('delete api gateway execution log group list')
     logger.info(json.dumps(not_exist_apigateway_execution_log_groups, ensure_ascii=False, indent=2))
 
-    # for not_exist_apigateway_execution_log_group in not_exist_apigateway_execution_log_groups:
-    #     logs_client.delete_log_group(logGroupName=not_exist_apigateway_execution_log_group)
+    for not_exist_apigateway_execution_log_group in not_exist_apigateway_execution_log_groups:
+        logs_client.delete_log_group(logGroupName=not_exist_apigateway_execution_log_group)
 
 
 def lambda_handler(event, context):
