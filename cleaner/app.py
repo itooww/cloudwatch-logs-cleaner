@@ -27,6 +27,7 @@ def get_log_groups():
     try:
         responses = list()
         response = logs_client.describe_log_groups()
+        responses.append(response)
         logger.debug(response)
         next_token = response['nextToken'] if 'nextToken' in response else ''
 
