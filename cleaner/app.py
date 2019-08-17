@@ -20,35 +20,22 @@ def get_log_group_names():
 
     Returns
     -------
-    log_groups: list
+    log_group_names: list
         ロググループ名のリスト
     """
 
-    log_groups = list()
+    log_group_names = list()
 
     try:
-        responses = list()
-        response = logs_client.describe_log_groups()
-        responses.append(response)
-        logger.debug(response)
-        next_token = response['nextToken'] if 'nextToken' in response else ''
-
-        while next_token:
-            response = logs_client.describe_log_groups(nextToken=next_token) if next_token else logs_client.describe_log_groups()
-            logger.debug(response)
-
-            responses.append(response)
-            next_token = response['nextToken'] if 'nextToken' in response else ''
-
-        for response in responses:
-            for log_group in response['logGroups']:
-                logger.debug(log_group)
-                log_groups.append(log_group['logGroupName'])
+        paginator = logs_client.get_paginator('describe_log_groups')
+        for page in paginator.paginate():
+            for log_group in page['logGroups']:
+                log_group_names.append(log_group['logGroupName'])
 
     except Exception as e:
         logger.error(e)
 
-    return log_groups
+    return log_group_names
 
 def get_lambda_function_names():
     """
