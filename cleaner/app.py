@@ -14,6 +14,7 @@ lambda_client = boto3.client('lambda')
 apigateway_client = boto3.client('apigateway')
 
 LAMBDA_FUNCTION_LOG_GROUP_NAME_PREFIX = '/aws/lambda/'
+API_GATEWAY_EXECUTION_LOG_NAME_PREFIX = 'API-Gateway-Execution-Logs_'
 
 def get_log_group_names():
     """
@@ -133,6 +134,57 @@ def get_apigateway_restapi_ids():
 
     return apigateway_restapi_ids
 
+def extract_apigateway_execution_log_group_names(log_group_names):
+    """
+    ロググループ名のリストを受け取り、そこから API Gateway 実行ロググループ名を抽出したリストを返す
+
+    Parameters
+    ----------
+    log_group_names: list, required
+        ロググループ名のリスト
+
+    Returns
+    -------
+    apigateway_execution_log_group_names: list
+        API Gateway 実行ロググループ名のリスト
+    """
+    apigateway_execution_log_group_names = list()
+
+    for log_group_name in log_group_names:
+        if API_GATEWAY_EXECUTION_LOG_NAME_PREFIX in log_group_name:
+            apigateway_execution_log_group_names.append(log_group_name)
+
+    return apigateway_execution_log_group_names
+
+
+def delete_not_exist_apigateway_execution_log_groups(apigateway_execution_log_group_names, apigateway_restapi_ids):
+    """
+    API Gateway Rest Api リソースが存在しない実行ロググループを削除する
+
+    Parameters
+    ----------
+    apigateway_execution_log_group_names: list, required
+        API Gateway 実行ロググループ名のリスト
+
+    apigateway_restapi_ids: list, required
+        API Gateway Rest Api ID のリスト
+    """
+
+    not_exist_apigateway_execution_log_groups = list()
+
+    for apigateway_execution_log_group_name in apigateway_execution_log_group_names:
+        for apigateway_restapi_id in apigateway_restapi_ids:
+            if apigateway_restapi_id in apigateway_execution_log_group_name:
+                break
+        else:
+            not_exist_apigateway_execution_log_groups.append(apigateway_execution_log_group_name)
+
+    logger.info('delete api gateway execution log group list')
+    logger.info(json.dumps(not_exist_apigateway_execution_log_groups, ensure_ascii=False, indent=2))
+
+    # for not_exist_apigateway_execution_log_group in not_exist_apigateway_execution_log_groups:
+    #     logs_client.delete_log_group(logGroupName=not_exist_apigateway_execution_log_group)
+
 
 def lambda_handler(event, context):
 
@@ -154,6 +206,10 @@ def lambda_handler(event, context):
     # get API Gateway Rest Api IDs
     apigateway_restapi_ids = get_apigateway_restapi_ids()
     logger.debug(json.dumps(apigateway_restapi_ids, ensure_ascii=False, indent=2))
+
+    # delete not exist API Gateway Rest Api execution log groups
+    apigateway_execution_log_group_names = extract_apigateway_execution_log_group_names(log_group_names)
+    delete_not_exist_apigateway_execution_log_groups(apigateway_execution_log_group_names, apigateway_restapi_ids)
 
     return {
         "statusCode": 200,
