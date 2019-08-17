@@ -11,6 +11,7 @@ logger.setLevel(INFO)
 
 logs_client = boto3.client('logs')
 lambda_client = boto3.client('lambda')
+apigateway_client = boto3.client('apigateway')
 
 LAMBDA_FUNCTION_LOG_GROUP_NAME_PREFIX = '/aws/lambda/'
 
@@ -109,6 +110,30 @@ def delete_not_exist_lambda_log_groups(lambda_log_group_names, lambda_function_n
     # for not_exist_lambda_log_group in not_exist_lambda_log_groups:
     #     logs_client.delete_log_group(logGroupName=not_exist_lambda_log_group)
 
+def get_apigateway_restapi_ids():
+    """
+    API Gateway Rest API の全ての情報を取得し、Rest Api ID のリストを返す
+
+    Returns
+    -------
+    apigateway_restapi_ids: list
+        Rest Api ID のリスト
+    """
+
+    apigateway_restapi_ids = list()
+
+    try:
+        paginator = apigateway_client.get_paginator('get_rest_apis')
+        for page in paginator.paginate():
+            for rest_api in page['items']:
+                apigateway_restapi_ids.append(rest_api['id'])
+
+    except Exception as e:
+        logger.error(e)
+
+    return apigateway_restapi_ids
+
+
 def lambda_handler(event, context):
 
     # recieved event
@@ -125,6 +150,10 @@ def lambda_handler(event, context):
     # delete not exit lambda log groups
     lambda_log_group_names = extract_lambda_log_group_names(log_group_names)
     delete_not_exist_lambda_log_groups(lambda_log_group_names, lambda_function_names)
+
+    # get API Gateway Rest Api IDs
+    apigateway_restapi_ids = get_apigateway_restapi_ids()
+    logger.debug(json.dumps(apigateway_restapi_ids, ensure_ascii=False, indent=2))
 
     return {
         "statusCode": 200,
