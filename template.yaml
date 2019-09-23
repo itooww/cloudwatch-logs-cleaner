@@ -15,7 +15,7 @@ Resources:
     Properties:
       CodeUri: cleaner/
       Handler: app.lambda_handler
-      Runtime: python3.7
+      Runtime: python3.6
       Tracing: Active
       Role: !GetAtt CleanerFunctionIamRole.Arn
       Events:
