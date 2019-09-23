@@ -16,6 +16,7 @@ Resources:
       CodeUri: cleaner/
       Handler: app.lambda_handler
       Runtime: python3.7
+      Tracing: Active
       Role: !GetAtt CleanerFunctionIamRole.Arn
       Events:
         DailyCleanEvent:
@@ -45,6 +46,20 @@ Resources:
                   - "logs:CreateLogGroup"
                   - "logs:CreateLogStream"
                   - "logs:PutLogEvents"
+                Resource: "*"
+        -
+          PolicyName: "use_x-ray_policy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action:
+                  - "xray:PutTraceSegments"
+                  - "xray:PutTelemetryRecords"
+                  - "xray:GetSamplingRules"
+                  - "xray:GetSamplingTargets"
+                  - "xray:GetSamplingStatisticSummaries"
                 Resource: "*"
         -
           PolicyName: "cleaner_need_policy"
