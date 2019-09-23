@@ -3,6 +3,12 @@ import botocore
 import boto3
 from logging import getLogger, INFO, DEBUG
 
+from aws_xray_sdk.core import xray_recorder
+from aws_xray_sdk.core import patch_all
+
+patch_all()
+# logging.getLogger('aws_xray_sdk').setLevel(logging.DEBUG)
+
 # boto3.set_stream_logger()
 # botocore.session.Session().set_debug_logger()
 
