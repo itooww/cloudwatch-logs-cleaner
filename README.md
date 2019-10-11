@@ -2,7 +2,7 @@
 
 ## これは何
 
-存在しない Lambda 関数や API Gateway リソースに紐づく CloudWatch Logs のロググループを日次で削除してくれるサーバーレスアプリ。
+存在しない Lambda 関数や API Gateway リソースに紐づく CloudWatch Logs のロググループを定期的に削除してくれるサーバーレスアプリ。
 
 
 ## デプロイ方法
