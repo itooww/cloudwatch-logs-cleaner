@@ -18,9 +18,11 @@ logger.setLevel(INFO)
 logs_client = boto3.client('logs')
 lambda_client = boto3.client('lambda')
 apigateway_client = boto3.client('apigateway')
+apigateway_v2_client = boto3.client('apigatewayv2')
 
 LAMBDA_FUNCTION_LOG_GROUP_NAME_PREFIX = '/aws/lambda/'
 API_GATEWAY_EXECUTION_LOG_NAME_PREFIX = 'API-Gateway-Execution-Logs_'
+API_GATEWAY_V2_EXECUTION_LOG_NAME_PREFIX = '/aws/apigateway/'
 
 def obj_to_prettry_str(obj):
     return json.dumps(obj, ensure_ascii=False, indent=2)
@@ -194,6 +196,78 @@ def delete_not_exist_apigateway_execution_log_groups(apigateway_execution_log_gr
     for not_exist_apigateway_execution_log_group in not_exist_apigateway_execution_log_groups:
         logs_client.delete_log_group(logGroupName=not_exist_apigateway_execution_log_group)
 
+def get_apigateway_v2_ids():
+    """
+    API Gateway V2 API の全ての情報を取得し、WebSocket ID のリストを返す
+
+    Returns
+    -------
+    apigateway_v2_ids: list
+        Rest Api ID のリスト
+    """
+
+    apigateway_v2_ids = list()
+
+    try:
+        paginator = apigateway_v2_client.get_paginator('get_apis')
+        for page in paginator.paginate():
+            for api in page['Items']:
+                apigateway_v2_ids.append(api['ApiId'])
+
+    except Exception as e:
+        logger.error(e)
+
+    return apigateway_v2_ids
+
+def extract_apigateway_v2_execution_log_group_names(log_group_names):
+    """
+    ロググループ名のリストを受け取り、そこから API Gateway V2 実行ロググループ名を抽出したリストを返す
+
+    Parameters
+    ----------
+    log_group_names: list, required
+        ロググループ名のリスト
+
+    Returns
+    -------
+    apigateway_v2_execution_log_group_names: list
+        API Gateway 実行ロググループ名のリスト
+    """
+    apigateway_v2_execution_log_group_names = list()
+
+    for log_group_name in log_group_names:
+        if API_GATEWAY_V2_EXECUTION_LOG_NAME_PREFIX in log_group_name:
+            apigateway_v2_execution_log_group_names.append(log_group_name)
+
+    return apigateway_v2_execution_log_group_names
+
+def delete_not_exist_apigateway_v2_execution_log_groups(apigateway_v2_execution_log_group_names, apigateway_v2_ids):
+    """
+    API Gateway V2 リソースが存在しない実行ロググループを削除する
+
+    Parameters
+    ----------
+    apigateway_v2_execution_log_group_names: list, required
+        API Gateway 実行ロググループ名のリスト
+
+    apigateway_v2_ids: list, required
+        API Gateway V2 ID のリスト
+    """
+
+    not_exist_apigateway_v2_execution_log_groups = list()
+
+    for apigateway_v2_execution_log_group_name in apigateway_v2_execution_log_group_names:
+        for apigateway_v2_id in apigateway_v2_ids:
+            if apigateway_v2_id in apigateway_v2_execution_log_group_name:
+                break
+        else:
+            not_exist_apigateway_v2_execution_log_groups.append(apigateway_v2_execution_log_group_name)
+
+    logger.info('delete api gateway v2 execution log group list')
+    logger.info(obj_to_prettry_str(not_exist_apigateway_v2_execution_log_groups))
+
+    for not_exist_apigateway_v2_execution_log_group in not_exist_apigateway_v2_execution_log_groups:
+        logs_client.delete_log_group(logGroupName=not_exist_apigateway_v2_execution_log_group)
 
 def lambda_handler(event, context):
 
@@ -219,6 +293,14 @@ def lambda_handler(event, context):
     # delete not exist API Gateway Rest Api execution log groups
     apigateway_execution_log_group_names = extract_apigateway_execution_log_group_names(log_group_names)
     delete_not_exist_apigateway_execution_log_groups(apigateway_execution_log_group_names, apigateway_restapi_ids)
+
+    # get API Gateway V2 API IDs
+    apigateway_v2_ids = get_apigateway_v2_ids()
+    logger.debug(obj_to_prettry_str(apigateway_v2_ids))
+
+    # delete not exist API Gateway V2 execution log groups
+    apigateway_v2_execution_log_group_names = extract_apigateway_v2_execution_log_group_names(log_group_names)
+    delete_not_exist_apigateway_v2_execution_log_groups(apigateway_v2_execution_log_group_names, apigateway_v2_ids)
 
     return {
         "statusCode": 200,
