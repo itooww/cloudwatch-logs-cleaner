@@ -1,6 +1,14 @@
 import json
 
+import boto3
+import moto
+
 import pytest
+from unittest.mock import Mock
+
+# import error workaround
+import sys
+sys.modules['aws_xray_sdk.core'] = Mock()
 
 from cleaner import app
 
