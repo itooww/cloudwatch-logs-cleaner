@@ -22,6 +22,9 @@ apigateway_client = boto3.client('apigateway')
 LAMBDA_FUNCTION_LOG_GROUP_NAME_PREFIX = '/aws/lambda/'
 API_GATEWAY_EXECUTION_LOG_NAME_PREFIX = 'API-Gateway-Execution-Logs_'
 
+def obj_to_prettry_str(obj):
+    return json.dumps(obj, ensure_ascii=False, indent=2)
+
 def get_log_group_names():
     """
     CloudWatch Logs の全てのロググループ情報を取得し、ロググループ名のリストを返す
@@ -112,7 +115,7 @@ def delete_not_exist_lambda_log_groups(lambda_log_group_names, lambda_function_n
 
     not_exist_lambda_log_groups = list(set(lambda_log_group_names) - set(lambda_function_names_concatenate_log_group_prefix))
     logger.info('delete lambda log group list')
-    logger.info(json.dumps(not_exist_lambda_log_groups, ensure_ascii=False, indent=2))
+    logger.info(obj_to_prettry_str(not_exist_lambda_log_groups))
 
     for not_exist_lambda_log_group in not_exist_lambda_log_groups:
         logs_client.delete_log_group(logGroupName=not_exist_lambda_log_group)
@@ -186,7 +189,7 @@ def delete_not_exist_apigateway_execution_log_groups(apigateway_execution_log_gr
             not_exist_apigateway_execution_log_groups.append(apigateway_execution_log_group_name)
 
     logger.info('delete api gateway execution log group list')
-    logger.info(json.dumps(not_exist_apigateway_execution_log_groups, ensure_ascii=False, indent=2))
+    logger.info(obj_to_prettry_str(not_exist_apigateway_execution_log_groups))
 
     for not_exist_apigateway_execution_log_group in not_exist_apigateway_execution_log_groups:
         logs_client.delete_log_group(logGroupName=not_exist_apigateway_execution_log_group)
@@ -195,15 +198,15 @@ def delete_not_exist_apigateway_execution_log_groups(apigateway_execution_log_gr
 def lambda_handler(event, context):
 
     # recieved event
-    logger.info(json.dumps(event, ensure_ascii=False, indent=2))
+    logger.info(obj_to_prettry_str(event))
 
     # get all log groups list
     log_group_names = get_log_group_names()
-    logger.debug(json.dumps(log_group_names, ensure_ascii=False, indent=2))
+    logger.debug(obj_to_prettry_str(log_group_names))
 
     # get lambda function names
     lambda_function_names = get_lambda_function_names()
-    logger.debug(json.dumps(lambda_function_names, ensure_ascii=False, indent=2))
+    logger.debug(obj_to_prettry_str(lambda_function_names))
 
     # delete not exit lambda log groups
     lambda_log_group_names = extract_lambda_log_group_names(log_group_names)
@@ -211,7 +214,7 @@ def lambda_handler(event, context):
 
     # get API Gateway Rest Api IDs
     apigateway_restapi_ids = get_apigateway_restapi_ids()
-    logger.debug(json.dumps(apigateway_restapi_ids, ensure_ascii=False, indent=2))
+    logger.debug(obj_to_prettry_str(apigateway_restapi_ids))
 
     # delete not exist API Gateway Rest Api execution log groups
     apigateway_execution_log_group_names = extract_apigateway_execution_log_group_names(log_group_names)
